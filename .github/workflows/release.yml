@@ -1,0 +1,31 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - name: Test
+        run: bundle exec rspec && bundle exec rubocop
+      - name: Build gem
+        run: gem build camelmailer.gemspec
+      - name: Publish to RubyGems
+        if: env.GEM_HOST_API_KEY != ''
+        run: gem push camelmailer-*.gem
+      - name: Skip publish (no RUBYGEMS_API_KEY secret)
+        if: env.GEM_HOST_API_KEY == ''
+        run: echo "RUBYGEMS_API_KEY secret not configured — skipping gem push."

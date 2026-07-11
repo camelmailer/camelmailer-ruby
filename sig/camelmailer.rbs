@@ -1,0 +1,170 @@
+module CamelMailer
+  VERSION: String
+  DEFAULT_BASE_URL: String
+
+  type payload = Hash[Symbol | String, untyped]
+  type response = Hash[Symbol, untyped]
+
+  def self.api_key: () -> String?
+  def self.api_key=: (String?) -> String?
+  def self.base_url: () -> String
+  def self.base_url=: (String?) -> String?
+  def self.configure: () { (module) -> void } -> module
+  def self.config: () { (module) -> void } -> module
+  def self.client: () -> Client
+  def self.reset!: () -> void
+
+  class Error < StandardError
+    attr_reader code: String?
+    attr_reader status_code: Integer?
+
+    def initialize: (?String? message, ?code: String?, ?status_code: Integer?) -> void
+  end
+
+  class ConnectionError < Error
+  end
+
+  class APIError < Error
+    ERROR_CODE_CLASSES: Hash[String, singleton(APIError)]
+
+    def self.for: (code: String?, message: String?, ?status_code: Integer?) -> APIError
+  end
+
+  class UnauthorizedError < APIError
+  end
+
+  class ForbiddenError < APIError
+  end
+
+  class NotFoundError < APIError
+  end
+
+  class ValidationError < APIError
+  end
+
+  class ParameterMissingError < APIError
+  end
+
+  class ServerError < APIError
+  end
+
+  class Client
+    API_PREFIX: String
+    NETWORK_ERRORS: Array[singleton(Exception)]
+
+    attr_reader api_key: String
+    attr_reader base_url: String
+    attr_reader open_timeout: Integer
+    attr_reader read_timeout: Integer
+
+    def initialize: (api_key: String?, ?base_url: String?, ?open_timeout: Integer, ?read_timeout: Integer) -> void
+
+    def emails: () -> Emails
+    def templates: () -> Templates
+    def streams: () -> Streams
+    def stats: () -> Stats
+    def bounces: () -> Bounces
+    def dmarc: () -> Dmarc
+
+    def get: (String path, ?payload? query) -> response
+    def post: (String path, ?payload? body) -> response
+    def patch: (String path, ?payload? body) -> response
+  end
+
+  class Resource
+    attr_reader client: Client
+
+    def self.expose: (*Symbol names) -> void
+    def initialize: (?Client client) -> void
+  end
+
+  class Emails < Resource
+    def send: (payload params) -> response
+    def send_batch: (Array[payload] messages) -> response
+    def send_with_template: (payload params) -> response
+    def send_with_template_batch: (Array[payload] messages) -> response
+    def get: (Integer | String id) -> response
+    def list: (**untyped filters) -> response
+    def deliveries: (Integer | String id) -> response
+    def opens: (Integer | String id) -> response
+    def clicks: (Integer | String id) -> response
+    def raw: (Integer | String id) -> response
+
+    def self.send: (payload params) -> response
+    def self.send_batch: (Array[payload] messages) -> response
+    def self.send_with_template: (payload params) -> response
+    def self.send_with_template_batch: (Array[payload] messages) -> response
+    def self.get: (Integer | String id) -> response
+    def self.list: (**untyped filters) -> response
+    def self.deliveries: (Integer | String id) -> response
+    def self.opens: (Integer | String id) -> response
+    def self.clicks: (Integer | String id) -> response
+    def self.raw: (Integer | String id) -> response
+  end
+
+  class Templates < Resource
+    def list: () -> response
+    def create: (payload params) -> response
+    def get: (String permalink) -> response
+    def update: (String permalink, payload params) -> response
+    def archive: (String permalink) -> response
+    def render: (String permalink, ?payload template_model) -> response
+
+    def self.list: () -> response
+    def self.create: (payload params) -> response
+    def self.get: (String permalink) -> response
+    def self.update: (String permalink, payload params) -> response
+    def self.archive: (String permalink) -> response
+    def self.render: (String permalink, ?payload template_model) -> response
+  end
+
+  class Streams < Resource
+    def list: () -> response
+    def create: (payload params) -> response
+    def get: (String permalink) -> response
+    def update: (String permalink, payload params) -> response
+    def archive: (String permalink) -> response
+
+    def self.list: () -> response
+    def self.create: (payload params) -> response
+    def self.get: (String permalink) -> response
+    def self.update: (String permalink, payload params) -> response
+    def self.archive: (String permalink) -> response
+  end
+
+  class Stats < Resource
+    def get: (?from: String?, ?to: String?) -> response
+    def deliveries: () -> response
+
+    def self.get: (?from: String?, ?to: String?) -> response
+    def self.deliveries: () -> response
+  end
+
+  class Bounces < Resource
+    def list: (**untyped filters) -> response
+    def get: (Integer | String id) -> response
+
+    def self.list: (**untyped filters) -> response
+    def self.get: (Integer | String id) -> response
+  end
+
+  class Dmarc < Resource
+    def summary: (?domain: String?, ?from: String?, ?to: String?) -> response
+    def reports: (?domain: String?, ?from: String?, ?to: String?, ?page: Integer?, ?per_page: Integer?) -> response
+    def report: (Integer | String id) -> response
+
+    def self.summary: (?domain: String?, ?from: String?, ?to: String?) -> response
+    def self.reports: (?domain: String?, ?from: String?, ?to: String?, ?page: Integer?, ?per_page: Integer?) -> response
+    def self.report: (Integer | String id) -> response
+  end
+
+  class Mailer
+    IGNORED_HEADERS: Array[String]
+
+    attr_accessor settings: Hash[Symbol, untyped]
+
+    def initialize: (?Hash[Symbol, untyped]? settings) -> void
+    def deliver!: (untyped mail) -> response
+    def build_params: (untyped mail) -> payload
+  end
+end
