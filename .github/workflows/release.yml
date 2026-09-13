@@ -21,6 +21,14 @@ jobs:
           bundler-cache: true
       - name: Test
         run: bundle exec rspec && bundle exec rubocop
+      - name: Refuse a tag that disagrees with the gem version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(ruby -r./lib/camelmailer/version -e 'print CamelMailer::VERSION')"
+          if [ "$tag" != "$version" ]; then
+            echo "tag $GITHUB_REF_NAME does not match CamelMailer::VERSION $version" >&2
+            exit 1
+          fi
       - name: Build gem
         run: gem build camelmailer.gemspec
       - name: Publish to RubyGems

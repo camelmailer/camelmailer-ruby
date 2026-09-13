@@ -9,18 +9,20 @@ Gem::Specification.new do |spec|
   spec.description   = "Ruby SDK for the Camelmailer transactional email API — " \
                        "send messages, manage templates, streams and stats, and " \
                        "plug into Rails via the :camelmailer ActionMailer delivery method."
-  spec.homepage      = "https://github.com/camelmailer/camelmailer-ruby"
+  spec.homepage      = "https://camelmailer.com"
   spec.license       = "MIT"
 
   spec.authors       = ["Camelmailer contributors"]
   spec.email         = ["hello@camelmailer.com"]
 
+  repository = "https://github.com/camelmailer/camelmailer-ruby"
+
   spec.metadata = {
     "homepage_uri" => spec.homepage,
-    "source_code_uri" => spec.homepage,
-    "changelog_uri" => "#{spec.homepage}/blob/main/CHANGELOG.md",
+    "source_code_uri" => repository,
+    "changelog_uri" => "#{repository}/blob/main/CHANGELOG.md",
     "documentation_uri" => "https://camelmailer.com/docs",
-    "bug_tracker_uri" => "#{spec.homepage}/issues",
+    "bug_tracker_uri" => "#{repository}/issues",
     "rubygems_mfa_required" => "true"
   }
 
