@@ -5,14 +5,14 @@ require_relative "lib/camelmailer/version"
 Gem::Specification.new do |spec|
   spec.name          = "camelmailer"
   spec.version       = CamelMailer::VERSION
-  spec.summary       = "The Ruby and Rails SDK for CamelMailer"
-  spec.description   = "Ruby SDK for the CamelMailer transactional email API — " \
+  spec.summary       = "The Ruby and Rails SDK for Camelmailer"
+  spec.description   = "Ruby SDK for the Camelmailer transactional email API — " \
                        "send messages, manage templates, streams and stats, and " \
                        "plug into Rails via the :camelmailer ActionMailer delivery method."
   spec.homepage      = "https://github.com/camelmailer/camelmailer-ruby"
   spec.license       = "MIT"
 
-  spec.authors       = ["CamelMailer contributors"]
+  spec.authors       = ["Camelmailer contributors"]
   spec.email         = ["hello@camelmailer.com"]
 
   spec.metadata = {
