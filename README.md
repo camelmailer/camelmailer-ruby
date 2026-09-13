@@ -4,7 +4,7 @@
 [![Gem Version](https://img.shields.io/gem/v/camelmailer)](https://rubygems.org/gems/camelmailer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-The Ruby and Rails SDK for [CamelMailer](https://camelmailer.com) — open-source transactional email. No runtime dependencies, Ruby >= 3.1.
+The Ruby and Rails SDK for [Camelmailer](https://camelmailer.com) — open-source transactional email. No runtime dependencies, Ruby >= 3.1.
 
 ## Install
 
@@ -40,7 +40,7 @@ Every resource is available both ways: `CamelMailer::Emails.send(...)` uses the 
 
 ## Self-hosted
 
-The base URL defaults to the CamelMailer cloud (`https://app.camelmailer.com`). Point it at your own instance:
+The base URL defaults to the Camelmailer cloud (`https://app.camelmailer.com`). Point it at your own instance:
 
 ```ruby
 CamelMailer.configure do |c|
