@@ -17,7 +17,8 @@ module CamelMailer
     end
 
     # Adds or updates one subscriber. Upserts by address:, so calling it
-    # twice is safe.
+    # twice is safe. Takes address: (required) and status: (:subscribed by
+    # default, or :unsubscribed); there is no name field.
     def add(permalink, params)
       client.post(base(permalink), params)
     end

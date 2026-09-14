@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-09-14
+
+### Fixed
+
+- `inbound` retry and bypass read `queued`. The endpoint answers with
+  `requeued`, so both returned false and no error whatever happened. They
+  also expose the `message` the response carries.
+- The subscriber types carried a `name`. The endpoint takes an address and a
+  status; a name was silently dropped, so the field promised something the
+  API does not store.
+
 ## [0.2.1] - 2026-09-14
 
 ### Fixed
@@ -56,7 +67,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rails integration: `:camelmailer` ActionMailer delivery method with full MIME mapping (from/to/cc/bcc/reply_to, html+text parts, attachments, custom headers, tag/stream/metadata pseudo-headers).
 - RBS type signatures.
 
-[Unreleased]: https://github.com/camelmailer/camelmailer-ruby/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/camelmailer/camelmailer-ruby/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/camelmailer/camelmailer-ruby/releases/tag/v0.2.2
 [0.2.1]: https://github.com/camelmailer/camelmailer-ruby/releases/tag/v0.2.1
 [0.2.0]: https://github.com/camelmailer/camelmailer-ruby/releases/tag/v0.2.0
 [0.1.0]: https://github.com/camelmailer/camelmailer-ruby/releases/tag/v0.1.0

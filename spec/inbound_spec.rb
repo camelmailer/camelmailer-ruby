@@ -18,12 +18,16 @@ RSpec.describe CamelMailer::Inbound do
     expect(inbound.get(55)[:message][:status]).to eq("held")
   end
 
-  it "retries and bypasses" do
-    retry_stub = stub_success(:post, "inbound/55/retry", data: { queued: true })
-    bypass_stub = stub_success(:post, "inbound/55/bypass", data: { queued: true })
+  it "retries and bypasses, reading the requeued flag" do
+    # The endpoint answers with :requeued, and carries the message.
+    body = { requeued: true, message: { id: 55 } }
+    retry_stub = stub_success(:post, "inbound/55/retry", data: body)
+    bypass_stub = stub_success(:post, "inbound/55/bypass", data: body)
 
-    inbound.retry(55)
-    inbound.bypass(55)
+    result = inbound.retry(55)
+    expect(result[:requeued]).to be(true)
+    expect(result[:message][:id]).to eq(55)
+    expect(inbound.bypass(55)[:requeued]).to be(true)
 
     expect(retry_stub).to have_been_requested
     expect(bypass_stub).to have_been_requested

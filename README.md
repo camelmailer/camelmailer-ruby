@@ -168,7 +168,7 @@ list is the audience.
 
 ```ruby
 CamelMailer::Subscribers.list("newsletter")
-CamelMailer::Subscribers.add("newsletter", address: "ada@example.com", name: "Ada")
+CamelMailer::Subscribers.add("newsletter", address: "ada@example.com")
 CamelMailer::Subscribers.import("newsletter", ["ada@example.com", "grace@example.com"])
 CamelMailer::Subscribers.complaint("newsletter", "ada@example.com") # suppress + unsubscribe
 CamelMailer::Subscribers.remove("newsletter", "ada@example.com")
@@ -194,8 +194,8 @@ CamelMailer::Layouts.delete("default")
 ```ruby
 CamelMailer::Inbound.list(status: "held")
 CamelMailer::Inbound.get(55)
-CamelMailer::Inbound.retry(55)   # back on the delivery queue
-CamelMailer::Inbound.bypass(55)  # release past the hold
+CamelMailer::Inbound.retry(55)[:requeued]   # back on the delivery queue
+CamelMailer::Inbound.bypass(55)[:requeued]  # release past the hold
 ```
 
 ### Logs
