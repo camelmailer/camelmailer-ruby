@@ -185,7 +185,7 @@ CamelMailer::Layouts.create(name: "Default", permalink: "default",
                             html_wrapper: "<html><body>{{{ content }}}</body></html>")
 CamelMailer::Layouts.get("default")
 CamelMailer::Layouts.update("default", name: "Main")
-CamelMailer::Layouts.upload_logo("default", "data:image/png;base64,...")
+CamelMailer::Layouts.upload_logo("default", "data:image/png;base64,...")[:url]
 CamelMailer::Layouts.delete("default")
 ```
 

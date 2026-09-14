@@ -34,8 +34,9 @@ module CamelMailer
     end
 
     # Uploads the layout's logo as a data URL
-    # ("data:image/png;base64,...") and returns the absolute URL to
-    # reference from the wrapper.
+    # ("data:image/png;base64,..."). The absolute URL to reference from
+    # the wrapper comes back under :url; it is served without
+    # authentication, because mail clients fetch it without a session.
     def upload_logo(permalink, data_url)
       client.post("layouts/#{permalink}/logo", { data_url: data_url })
     end
