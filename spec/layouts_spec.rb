@@ -43,11 +43,12 @@ RSpec.describe CamelMailer::Layouts do
   it "uploads a logo as a data URL" do
     stub = stub_request(:post, "#{EnvelopeHelpers::BASE}/layouts/default/logo")
            .with(body: JSON.generate({ data_url: "data:image/png;base64,iVBORw0KGgo=" }))
-           .to_return(status: 200, body: success_json({ logo_url: "https://app.camelmailer.com/l.png" }),
+           .to_return(status: 200, body: success_json({ url: "https://app.camelmailer.com/assets/layouts/l-1/logo" }),
                       headers: json_headers)
 
-    expect(layouts.upload_logo("default", "data:image/png;base64,iVBORw0KGgo=")[:logo_url])
-      .to eq("https://app.camelmailer.com/l.png")
+    # The endpoint answers with :url, not :logo_url.
+    expect(layouts.upload_logo("default", "data:image/png;base64,iVBORw0KGgo=")[:url])
+      .to eq("https://app.camelmailer.com/assets/layouts/l-1/logo")
     expect(stub).to have_been_requested
   end
 end
