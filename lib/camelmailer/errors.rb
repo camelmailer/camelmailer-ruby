@@ -43,6 +43,15 @@ module CamelMailer
   # 400 — a required parameter is missing.
   class ParameterMissingError < APIError; end
 
+  # 429 — the server's 30-day send allowance is used up. Answered before
+  # anything is stored, so nothing was queued and a retry once the window
+  # moves on will work.
+  class SendLimitExceededError < APIError; end
+
+  # 409 — an Idempotency-Key was reused for a different request body, or
+  # sent twice on one request.
+  class InvalidIdempotentRequestError < APIError; end
+
   # Unexpected non-envelope response (e.g. a 5xx from a proxy).
   class ServerError < APIError; end
 
@@ -51,6 +60,8 @@ module CamelMailer
     "Forbidden" => ForbiddenError,
     "NotFound" => NotFoundError,
     "ValidationError" => ValidationError,
-    "ParameterMissing" => ParameterMissingError
+    "ParameterMissing" => ParameterMissingError,
+    "SendLimitExceeded" => SendLimitExceededError,
+    "InvalidIdempotentRequest" => InvalidIdempotentRequestError
   }.freeze
 end

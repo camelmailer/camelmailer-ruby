@@ -34,44 +34,44 @@ module CamelMailer
       @read_timeout = read_timeout
     end
 
-    def emails
-      @emails ||= Emails.new(self)
-    end
+    # The resource each accessor returns, memoized per client so
+    # +client.emails+ is the same object every time. Named by constant
+    # rather than by class, because the resource files are required after
+    # this one.
+    RESOURCES = {
+      emails: :Emails, templates: :Templates, streams: :Streams,
+      stats: :Stats, bounces: :Bounces, dmarc: :Dmarc,
+      campaigns: :Campaigns, subscribers: :Subscribers, layouts: :Layouts,
+      inbound: :Inbound, logs: :Logs
+    }.freeze
 
-    def templates
-      @templates ||= Templates.new(self)
-    end
-
-    def streams
-      @streams ||= Streams.new(self)
-    end
-
-    def stats
-      @stats ||= Stats.new(self)
-    end
-
-    def bounces
-      @bounces ||= Bounces.new(self)
-    end
-
-    def dmarc
-      @dmarc ||= Dmarc.new(self)
+    RESOURCES.each do |name, const|
+      define_method(name) do
+        (@resources ||= {})[name] ||= CamelMailer.const_get(const).new(self)
+      end
     end
 
     def get(path, query = nil)
       perform(Net::HTTP::Get.new(build_uri(path, query)))
     end
 
-    def post(path, body = nil)
+    # +headers+ carries request headers such as Idempotency-Key, which
+    # belong outside the body: the body is what the server hashes to
+    # recognise the same request.
+    def post(path, body = nil, headers = {})
       req = Net::HTTP::Post.new(build_uri(path))
       attach_body(req, body)
-      perform(req)
+      perform(req, headers)
     end
 
     def patch(path, body = nil)
       req = Net::HTTP::Patch.new(build_uri(path))
       attach_body(req, body)
       perform(req)
+    end
+
+    def delete(path)
+      perform(Net::HTTP::Delete.new(build_uri(path)))
     end
 
     private
@@ -92,10 +92,11 @@ module CamelMailer
       req.body = JSON.generate(body)
     end
 
-    def perform(req)
+    def perform(req, headers = {})
       req["X-Server-API-Key"] = api_key
       req["Accept"] = "application/json"
       req["User-Agent"] = "camelmailer-ruby/#{VERSION}"
+      headers.each { |name, value| req[name.to_s] = value.to_s }
 
       handle(transport(req.uri).request(req))
     rescue *NETWORK_ERRORS => e

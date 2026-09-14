@@ -10,6 +10,11 @@ require "camelmailer/streams"
 require "camelmailer/stats"
 require "camelmailer/bounces"
 require "camelmailer/dmarc"
+require "camelmailer/campaigns"
+require "camelmailer/subscribers"
+require "camelmailer/layouts"
+require "camelmailer/inbound"
+require "camelmailer/logs"
 
 # The Ruby SDK for CamelMailer — https://camelmailer.com
 #
