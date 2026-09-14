@@ -14,7 +14,8 @@ RSpec.describe CamelMailer::Subscribers do
 
   describe "#add" do
     it "upserts by address" do
-      params = { address: "ada@example.com", name: "Ada" }
+      # The endpoint takes address and status; there is no name field.
+      params = { address: "ada@example.com", status: "subscribed" }
       stub = stub_request(:post, "#{EnvelopeHelpers::BASE}/streams/newsletter/subscribers")
              .with(body: JSON.generate(params))
              .to_return(status: 201, body: success_json({ subscriber: params }), headers: json_headers)

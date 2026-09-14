@@ -19,7 +19,8 @@ module CamelMailer
     end
 
     # Puts a message back on the delivery queue, for instance after fixing
-    # the route it should have matched.
+    # the route it should have matched. The response carries :requeued and
+    # the :message as it now stands.
     def retry(id)
       client.post("inbound/#{id}/retry")
     end
