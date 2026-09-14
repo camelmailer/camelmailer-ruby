@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-14
+
+### Fixed
+
+- The `upload_logo` documentation and spec read `:logo_url`. The endpoint
+  answers with `:url`, so anyone following the README read a key that is
+  never there. No call was broken; only the documented shape was wrong.
+
 ## [0.2.0] - 2026-09-14
 
 ### Fixed
@@ -48,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rails integration: `:camelmailer` ActionMailer delivery method with full MIME mapping (from/to/cc/bcc/reply_to, html+text parts, attachments, custom headers, tag/stream/metadata pseudo-headers).
 - RBS type signatures.
 
-[Unreleased]: https://github.com/camelmailer/camelmailer-ruby/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/camelmailer/camelmailer-ruby/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/camelmailer/camelmailer-ruby/releases/tag/v0.2.1
 [0.2.0]: https://github.com/camelmailer/camelmailer-ruby/releases/tag/v0.2.0
 [0.1.0]: https://github.com/camelmailer/camelmailer-ruby/releases/tag/v0.1.0
