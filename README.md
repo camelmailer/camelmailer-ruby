@@ -88,6 +88,7 @@ CamelMailer::Emails.send(from:, to:, subject:, html_body:, text_body:, cc:, bcc:
 CamelMailer::Emails.send_batch([{ from:, to:, ... }, ...])
 CamelMailer::Emails.send_with_template(from:, to:, template: "welcome", template_model: { name: "Ada" })
 CamelMailer::Emails.send_with_template_batch([...])
+CamelMailer::Emails.send_to_stream("newsletter", from:, subject:, text_body:)
 CamelMailer::Emails.get(42)
 CamelMailer::Emails.list(scope: "outgoing", status: "Sent", tag: "receipt", query: "ada", page: 1, per_page: 50)
 CamelMailer::Emails.deliveries(42)  # delivery attempts
@@ -97,6 +98,20 @@ CamelMailer::Emails.raw(42)         # raw RFC 5322 source
 ```
 
 Attachments are `{ name:, content_type:, data_base64: }`; addresses are either `"a@b.com"` or `{ email: "a@b.com", name: "Ada" }`.
+
+`send_to_stream` broadcasts to everyone subscribed to a stream, up to 1000
+per call; the response counts `queued:` against `skipped:`, so a larger
+audience wants a campaign.
+
+Every send takes an optional `idempotency_key:`, which makes it replayable:
+the same key with the same body returns the first result instead of sending
+twice, and a different body under the same key raises
+`CamelMailer::InvalidIdempotentRequestError`.
+
+```ruby
+CamelMailer::Emails.send(from: "billing@acme.com", to: ["ada@example.com"],
+                         subject: "Your receipt", idempotency_key: "receipt-#{order.id}")
+```
 
 ### Templates
 
@@ -117,6 +132,80 @@ CamelMailer::Streams.create(name: "Broadcasts", stream_type: "broadcast")
 CamelMailer::Streams.get("broadcasts")
 CamelMailer::Streams.update("broadcasts", name: "News")
 CamelMailer::Streams.archive("broadcasts")
+```
+
+### Campaigns
+
+A campaign is content plus an audience. The two ways to create one behave
+differently, so pick deliberately: `create_draft` writes it and waits,
+`create_and_send` expands it to the stream's subscribers before the call
+returns.
+
+```ruby
+CamelMailer::Campaigns.create_draft(stream: "newsletter", name: "September",
+                                    from: "news@acme.com", subject: "What shipped",
+                                    text_body: "Hello.")
+# scheduled_at: "2026-10-01T09:00:00Z" arms it as `scheduled`
+# send_now: true sends it on creation
+
+CamelMailer::Campaigns.create_and_send("newsletter", name: "Status update",
+                                       from: "news@acme.com", text_body: "All clear.")
+
+CamelMailer::Campaigns.list
+CamelMailer::Campaigns.list_for_stream("newsletter")
+CamelMailer::Campaigns.get(7)                      # with stats
+CamelMailer::Campaigns.get_for_stream("newsletter", 7)
+CamelMailer::Campaigns.update(7, subject: "Corrected")
+CamelMailer::Campaigns.update(7, scheduled_at: nil) # back to draft
+CamelMailer::Campaigns.send(7)                      # now, whatever the schedule said
+CamelMailer::Campaigns.cancel(7)
+```
+
+### Subscribers
+
+A broadcast send to an address that is not subscribed is refused, so this
+list is the audience.
+
+```ruby
+CamelMailer::Subscribers.list("newsletter")
+CamelMailer::Subscribers.add("newsletter", address: "ada@example.com", name: "Ada")
+CamelMailer::Subscribers.import("newsletter", ["ada@example.com", "grace@example.com"])
+CamelMailer::Subscribers.complaint("newsletter", "ada@example.com") # suppress + unsubscribe
+CamelMailer::Subscribers.remove("newsletter", "ada@example.com")
+```
+
+### Layouts
+
+A layout wraps every template that uses it. `html_wrapper` has to embed the
+body with `{{{ content }}}`.
+
+```ruby
+CamelMailer::Layouts.list
+CamelMailer::Layouts.create(name: "Default", permalink: "default",
+                            html_wrapper: "<html><body>{{{ content }}}</body></html>")
+CamelMailer::Layouts.get("default")
+CamelMailer::Layouts.update("default", name: "Main")
+CamelMailer::Layouts.upload_logo("default", "data:image/png;base64,...")
+CamelMailer::Layouts.delete("default")
+```
+
+### Inbound and held messages
+
+```ruby
+CamelMailer::Inbound.list(status: "held")
+CamelMailer::Inbound.get(55)
+CamelMailer::Inbound.retry(55)   # back on the delivery queue
+CamelMailer::Inbound.bypass(55)  # release past the hold
+```
+
+### Logs
+
+Useful when a send did not arrive and the question is whether the request
+ever reached the API.
+
+```ruby
+CamelMailer::Logs.list(per_page: 25)
+CamelMailer::Logs.tags
 ```
 
 ### Stats & bounces

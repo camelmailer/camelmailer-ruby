@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-14
+
+### Fixed
+
+- `Emails.send_batch` and `Emails.send_with_template_batch` wrapped the
+  entries in `{ messages: [...] }`. The endpoint reads a bare JSON array,
+  so every batch send was rejected before anything was queued. The existing
+  spec asserted the wrapper, which is why it survived. Both now send the
+  array as given.
+- `sig/camelmailer.rbs` had a syntax error (`(module)` is not a type) and
+  could not be parsed by any type checker. CI now validates it.
+
+### Added
+
+- `Campaigns`: `create_draft`, `create_and_send`, `list`, `list_for_stream`,
+  `get`, `get_for_stream`, `update`, `send`, `cancel`. The two create
+  methods hit different routes: `create_draft` writes the campaign and
+  waits, `create_and_send` expands it to the stream's subscribers before
+  the call returns.
+- `Subscribers`: `list`, `add`, `import`, `complaint`, `remove`.
+- `Layouts`: `list`, `create`, `get`, `update`, `delete`, `upload_logo`.
+- `Inbound`: `list`, `get`, `retry`, `bypass`.
+- `Logs`: `list`, `tags`.
+- `Emails.send_to_stream` for broadcasting to a stream's subscribers.
+- An optional `idempotency_key:` on every send. It travels as the
+  `Idempotency-Key` header, because the body is what the server hashes to
+  recognise a replay.
+- `SendLimitExceededError` (429) and `InvalidIdempotentRequestError` (409).
+- `Client#delete`, and request headers on `Client#post`.
+
 ## [0.1.0] - 2026-07-11
 
 ### Added
@@ -18,5 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rails integration: `:camelmailer` ActionMailer delivery method with full MIME mapping (from/to/cc/bcc/reply_to, html+text parts, attachments, custom headers, tag/stream/metadata pseudo-headers).
 - RBS type signatures.
 
-[Unreleased]: https://github.com/camelmailer/camelmailer-ruby/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/camelmailer/camelmailer-ruby/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/camelmailer/camelmailer-ruby/releases/tag/v0.2.0
 [0.1.0]: https://github.com/camelmailer/camelmailer-ruby/releases/tag/v0.1.0

@@ -9,8 +9,8 @@ module CamelMailer
   def self.api_key=: (String?) -> String?
   def self.base_url: () -> String
   def self.base_url=: (String?) -> String?
-  def self.configure: () { (module) -> void } -> module
-  def self.config: () { (module) -> void } -> module
+  def self.configure: () { (singleton(CamelMailer)) -> void } -> singleton(CamelMailer)
+  def self.config: () { (singleton(CamelMailer)) -> void } -> singleton(CamelMailer)
   def self.client: () -> Client
   def self.reset!: () -> void
 
@@ -45,6 +45,12 @@ module CamelMailer
   class ParameterMissingError < APIError
   end
 
+  class SendLimitExceededError < APIError
+  end
+
+  class InvalidIdempotentRequestError < APIError
+  end
+
   class ServerError < APIError
   end
 
@@ -59,16 +65,24 @@ module CamelMailer
 
     def initialize: (api_key: String?, ?base_url: String?, ?open_timeout: Integer, ?read_timeout: Integer) -> void
 
+    RESOURCES: Hash[Symbol, Symbol]
+
     def emails: () -> Emails
     def templates: () -> Templates
     def streams: () -> Streams
     def stats: () -> Stats
     def bounces: () -> Bounces
     def dmarc: () -> Dmarc
+    def campaigns: () -> Campaigns
+    def subscribers: () -> Subscribers
+    def layouts: () -> Layouts
+    def inbound: () -> Inbound
+    def logs: () -> Logs
 
     def get: (String path, ?payload? query) -> response
-    def post: (String path, ?payload? body) -> response
+    def post: (String path, ?(payload | Array[payload])? body, ?Hash[String, String] headers) -> response
     def patch: (String path, ?payload? body) -> response
+    def delete: (String path) -> response
   end
 
   class Resource
@@ -79,10 +93,11 @@ module CamelMailer
   end
 
   class Emails < Resource
-    def send: (payload params) -> response
-    def send_batch: (Array[payload] messages) -> response
-    def send_with_template: (payload params) -> response
-    def send_with_template_batch: (Array[payload] messages) -> response
+    def send: (?payload params, **untyped fields) -> response
+    def send_batch: (Array[payload] messages, ?idempotency_key: String?) -> response
+    def send_with_template: (?payload params, **untyped fields) -> response
+    def send_with_template_batch: (Array[payload] messages, ?idempotency_key: String?) -> response
+    def send_to_stream: (String permalink, payload params) -> response
     def get: (Integer | String id) -> response
     def list: (**untyped filters) -> response
     def deliveries: (Integer | String id) -> response
@@ -90,10 +105,11 @@ module CamelMailer
     def clicks: (Integer | String id) -> response
     def raw: (Integer | String id) -> response
 
-    def self.send: (payload params) -> response
-    def self.send_batch: (Array[payload] messages) -> response
-    def self.send_with_template: (payload params) -> response
-    def self.send_with_template_batch: (Array[payload] messages) -> response
+    def self.send: (?payload params, **untyped fields) -> response
+    def self.send_batch: (Array[payload] messages, ?idempotency_key: String?) -> response
+    def self.send_with_template: (?payload params, **untyped fields) -> response
+    def self.send_with_template_batch: (Array[payload] messages, ?idempotency_key: String?) -> response
+    def self.send_to_stream: (String permalink, payload params) -> response
     def self.get: (Integer | String id) -> response
     def self.list: (**untyped filters) -> response
     def self.deliveries: (Integer | String id) -> response
@@ -156,6 +172,78 @@ module CamelMailer
     def self.summary: (?domain: String?, ?from: String?, ?to: String?) -> response
     def self.reports: (?domain: String?, ?from: String?, ?to: String?, ?page: Integer?, ?per_page: Integer?) -> response
     def self.report: (Integer | String id) -> response
+  end
+
+  class Campaigns < Resource
+    def list: () -> response
+    def list_for_stream: (String permalink) -> response
+    def get: (Integer | String id) -> response
+    def get_for_stream: (String permalink, Integer | String id) -> response
+    def create_draft: (payload params) -> response
+    def create_and_send: (String permalink, payload params) -> response
+    def update: (Integer | String id, payload params) -> response
+    def send: (Integer | String id) -> response
+    def cancel: (Integer | String id) -> response
+
+    def self.list: () -> response
+    def self.list_for_stream: (String permalink) -> response
+    def self.get: (Integer | String id) -> response
+    def self.get_for_stream: (String permalink, Integer | String id) -> response
+    def self.create_draft: (payload params) -> response
+    def self.create_and_send: (String permalink, payload params) -> response
+    def self.update: (Integer | String id, payload params) -> response
+    def self.send: (Integer | String id) -> response
+    def self.cancel: (Integer | String id) -> response
+  end
+
+  class Subscribers < Resource
+    def list: (String permalink) -> response
+    def add: (String permalink, payload params) -> response
+    def import: (String permalink, Array[String] addresses) -> response
+    def complaint: (String permalink, String address) -> response
+    def remove: (String permalink, String address) -> response
+
+    def self.list: (String permalink) -> response
+    def self.add: (String permalink, payload params) -> response
+    def self.import: (String permalink, Array[String] addresses) -> response
+    def self.complaint: (String permalink, String address) -> response
+    def self.remove: (String permalink, String address) -> response
+  end
+
+  class Layouts < Resource
+    def list: () -> response
+    def create: (payload params) -> response
+    def get: (String permalink) -> response
+    def update: (String permalink, payload params) -> response
+    def delete: (String permalink) -> response
+    def upload_logo: (String permalink, String data_url) -> response
+
+    def self.list: () -> response
+    def self.create: (payload params) -> response
+    def self.get: (String permalink) -> response
+    def self.update: (String permalink, payload params) -> response
+    def self.delete: (String permalink) -> response
+    def self.upload_logo: (String permalink, String data_url) -> response
+  end
+
+  class Inbound < Resource
+    def list: (**untyped filters) -> response
+    def get: (Integer | String id) -> response
+    def retry: (Integer | String id) -> response
+    def bypass: (Integer | String id) -> response
+
+    def self.list: (**untyped filters) -> response
+    def self.get: (Integer | String id) -> response
+    def self.retry: (Integer | String id) -> response
+    def self.bypass: (Integer | String id) -> response
+  end
+
+  class Logs < Resource
+    def list: (**untyped filters) -> response
+    def tags: () -> response
+
+    def self.list: (**untyped filters) -> response
+    def self.tags: () -> response
   end
 
   class Mailer

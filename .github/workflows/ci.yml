@@ -27,3 +27,7 @@ jobs:
         run: bundle exec rubocop
       - name: RSpec
         run: bundle exec rspec
+      # The gem ships sig/camelmailer.rbs. It went two releases with a
+      # syntax error in it, because nothing ever parsed it.
+      - name: RBS
+        run: bundle exec rbs -I sig validate

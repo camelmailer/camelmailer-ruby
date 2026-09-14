@@ -44,4 +44,12 @@ RSpec.describe "Integration roundtrip", :integration do
     expect(client.streams.list).to have_key(:streams)
     expect(client.stats.get).to have_key(:stats)
   end
+
+  it "reaches the broadcast and diagnostic surfaces" do
+    expect(client.campaigns.list).to have_key(:campaigns)
+    expect(client.layouts.list).to have_key(:layouts)
+    expect(client.inbound.list(per_page: 1)).to have_key(:inbound)
+    expect(client.logs.list(per_page: 1)).to have_key(:requests)
+    expect(client.logs.tags).to have_key(:tags)
+  end
 end

@@ -29,13 +29,104 @@ RSpec.describe CamelMailer::Emails do
   end
 
   describe "#send_batch" do
-    it "wraps the entries in a messages array" do
+    it "sends the entries as a bare array, which is what the endpoint reads" do
       entries = [{ from: "a@acme.com", to: ["x@e.com"] }, { from: "a@acme.com", to: ["y@e.com"] }]
       stub = stub_request(:post, "#{EnvelopeHelpers::BASE}/messages/batch")
-             .with(body: JSON.generate({ messages: entries }))
+             .with(body: JSON.generate(entries))
              .to_return(status: 200, body: success_json({ results: [] }), headers: json_headers)
 
       emails.send_batch(entries)
+      expect(stub).to have_been_requested
+    end
+
+    it "carries an idempotency key as a header" do
+      entries = [{ from: "a@acme.com", to: ["x@e.com"] }]
+      stub = stub_request(:post, "#{EnvelopeHelpers::BASE}/messages/batch")
+             .with(headers: { "Idempotency-Key" => "batch-1" })
+             .to_return(status: 200, body: success_json, headers: json_headers)
+
+      emails.send_batch(entries, idempotency_key: "batch-1")
+      expect(stub).to have_been_requested
+    end
+  end
+
+  describe "call shapes" do
+    it "takes the message as keywords, which is how the README shows it" do
+      stub = stub_request(:post, "#{EnvelopeHelpers::BASE}/messages")
+             .with(body: JSON.generate({ from: "a@acme.com", to: ["b@e.com"], subject: "Hi" }))
+             .to_return(status: 201, body: success_json({ message_id: 1 }), headers: json_headers)
+
+      emails.send(from: "a@acme.com", to: ["b@e.com"], subject: "Hi")
+      expect(stub).to have_been_requested
+    end
+
+    it "takes keywords together with an idempotency key" do
+      stub = stub_request(:post, "#{EnvelopeHelpers::BASE}/messages")
+             .with(body: JSON.generate({ from: "a@acme.com", to: ["b@e.com"] }),
+                   headers: { "Idempotency-Key" => "k" })
+             .to_return(status: 201, body: success_json({ message_id: 1 }), headers: json_headers)
+
+      emails.send(from: "a@acme.com", to: ["b@e.com"], idempotency_key: "k")
+      expect(stub).to have_been_requested
+    end
+
+    it "takes a template send as keywords with a key" do
+      stub = stub_request(:post, "#{EnvelopeHelpers::BASE}/messages/with_template")
+             .with(body: JSON.generate({ from: "a@acme.com", to: ["b@e.com"], template: "welcome" }),
+                   headers: { "Idempotency-Key" => "t" })
+             .to_return(status: 201, body: success_json({ message_id: 1 }), headers: json_headers)
+
+      emails.send_with_template(from: "a@acme.com", to: ["b@e.com"], template: "welcome",
+                                idempotency_key: "t")
+      expect(stub).to have_been_requested
+    end
+  end
+
+  describe "idempotent sends" do
+    it "puts the key in a header, not in the body" do
+      params = { from: "a@acme.com", to: ["b@e.com"], subject: "Receipt" }
+      stub = stub_request(:post, "#{EnvelopeHelpers::BASE}/messages")
+             .with(body: JSON.generate(params), headers: { "Idempotency-Key" => "receipt-7" })
+             .to_return(status: 201, body: success_json({ message_id: 1 }), headers: json_headers)
+
+      emails.send(params, idempotency_key: "receipt-7")
+      expect(stub).to have_been_requested
+    end
+
+    it "sends no header without a key" do
+      params = { from: "a@acme.com", to: ["b@e.com"] }
+      stub = stub_request(:post, "#{EnvelopeHelpers::BASE}/messages")
+             .with { |req| !req.headers.key?("Idempotency-Key") }
+             .to_return(status: 201, body: success_json({ message_id: 1 }), headers: json_headers)
+
+      emails.send(params)
+      expect(stub).to have_been_requested
+    end
+
+    it "raises InvalidIdempotentRequestError when the key is reused for another body" do
+      stub_error(:post, "messages", code: "InvalidIdempotentRequest",
+                                    message: "key used for a different request", status: 409)
+
+      expect { emails.send({ from: "a@acme.com", to: ["b@e.com"] }, idempotency_key: "reused") }
+        .to raise_error(CamelMailer::InvalidIdempotentRequestError)
+    end
+
+    it "raises SendLimitExceededError when the allowance is used up" do
+      stub_error(:post, "messages", code: "SendLimitExceeded", message: "allowance used up", status: 429)
+
+      expect { emails.send({ from: "a@acme.com", to: ["b@e.com"] }) }
+        .to raise_error(CamelMailer::SendLimitExceededError)
+    end
+  end
+
+  describe "#send_to_stream" do
+    it "posts to the stream's send endpoint" do
+      params = { from: "news@acme.com", subject: "September", text_body: "Hello." }
+      stub = stub_request(:post, "#{EnvelopeHelpers::BASE}/streams/newsletter/send")
+             .with(body: JSON.generate(params))
+             .to_return(status: 202, body: success_json({ queued: 42, skipped: 0 }), headers: json_headers)
+
+      expect(emails.send_to_stream("newsletter", params)[:queued]).to eq(42)
       expect(stub).to have_been_requested
     end
   end
@@ -64,7 +155,7 @@ RSpec.describe CamelMailer::Emails do
     it "posts the batch to /messages/with_template/batch" do
       entries = [{ from: "a@acme.com", to: ["x@e.com"], template: "welcome" }]
       stub = stub_request(:post, "#{EnvelopeHelpers::BASE}/messages/with_template/batch")
-             .with(body: JSON.generate({ messages: entries }))
+             .with(body: JSON.generate(entries))
              .to_return(status: 200, body: success_json, headers: json_headers)
 
       emails.send_with_template_batch(entries)
